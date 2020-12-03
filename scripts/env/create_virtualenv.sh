@@ -2,7 +2,7 @@
 set -ex
 
 SCRIPT_DIR=$(dirname $(realpath $0))
-python_version=3.8
+python_version=3.6
 
 virtualenv_dir=~/.config/virtualenvs/osr
 

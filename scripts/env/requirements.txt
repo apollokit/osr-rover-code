@@ -3,7 +3,6 @@ Click==7.0
 decorator==4.4.2
 future==0.18.2
 ipdb==0.12.2
-ipython==7.19.0
 ipython-genutils==0.2.0
 iso8601==0.1.13
 jedi==0.17.2
@@ -15,5 +14,4 @@ ptyprocess==0.6.0
 Pygments==2.7.2
 PyYAML==5.3.1
 serial==0.0.97
-traitlets==5.0.5
 wcwidth==0.2.5
