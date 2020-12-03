@@ -27,28 +27,28 @@ class RoboclawWrapper(object):
         self.encoder_limits = {}
         self.establish_roboclaw_connections()
         self.stop_motors()  # don't move at start
-        self.setup_encoders()
+        # self.setup_encoders()
 
         # save settings to non-volatile (permanent) memory
-        for address in self.address:
-            self.rc.WriteNVM(address)
+        # for address in self.address:
+        #     self.rc.WriteNVM(address)
 
-        for address in self.address:
-            self.rc.ReadNVM(address)
+        # for address in self.address:
+        #     self.rc.ReadNVM(address)
 
-        self.corner_max_vel = 1000
-        # corner motor acceleration
-        # Even though the actual method takes longs (2*32-1), roboclaw blog says 2**15 is 100%
-        accel_max = 2**15-1
-        accel_rate = rospy.get_param('/corner_acceleration_factor', 0.8)
-        self.corner_accel = int(accel_max * accel_rate)
+        # self.corner_max_vel = 1000
+        # # corner motor acceleration
+        # # Even though the actual method takes longs (2*32-1), roboclaw blog says 2**15 is 100%
+        # accel_max = 2**15-1
+        # accel_rate = rospy.get_param('/corner_acceleration_factor', 0.8)
+        # self.corner_accel = int(accel_max * accel_rate)
         self.roboclaw_overflow = 2**15-1
-        # drive motor acceleration
+        # # drive motor acceleration
         accel_max = 2**15-1
         accel_rate = rospy.get_param('/drive_acceleration_factor', 0.5)
         self.drive_accel = int(accel_max * accel_rate)
-        self.velocity_timeout = rospy.Duration(rospy.get_param('/velocity_timeout', 2.0))
-        self.time_last_cmd = rospy.Time.now()
+        # self.velocity_timeout = rospy.Duration(rospy.get_param('/velocity_timeout', 2.0))
+        # self.time_last_cmd = rospy.Time.now()
 
         self.stop_motors()
 
@@ -74,32 +74,32 @@ class RoboclawWrapper(object):
                 drive_fcn(self.drive_cmd_buffer)
                 self.drive_cmd_buffer = None
                 
-            if self.corner_cmd_buffer:
-                self.send_corner_buffer(self.corner_cmd_buffer)
-                self.corner_cmd_buffer = None
+            # if self.corner_cmd_buffer:
+            #     self.send_corner_buffer(self.corner_cmd_buffer)
+            #     self.corner_cmd_buffer = None
 
-            # read from roboclaws and publish
-            try:
-                self.read_encoder_values()
-                self.enc_pub.publish(self.current_enc_vals)
-            except AssertionError as read_exc:
-                rospy.logwarn( "Failed to read encoder values")
+            # # read from roboclaws and publish
+            # try:
+            #     self.read_encoder_values()
+            #     self.enc_pub.publish(self.current_enc_vals)
+            # except AssertionError as read_exc:
+            #     rospy.logwarn( "Failed to read encoder values")
 
-            # Downsample the rate of less important data
-            if (counter >= 5):
-                status.battery = self.read_battery()
-                status.temp = self.read_temperatures()
-                status.current = self.read_currents()
-                status.error_status = self.read_errors()
-                counter = 0
+            # # Downsample the rate of less important data
+            # if (counter >= 5):
+            #     status.battery = self.read_battery()
+            #     status.temp = self.read_temperatures()
+            #     status.current = self.read_currents()
+            #     status.error_status = self.read_errors()
+            #     counter = 0
 
-            # stop the motors if we haven't received a command in a while
-            now = rospy.Time.now()
-            if now - self.time_last_cmd > self.velocity_timeout:
-                # rather than a hard stop, send a ramped velocity command
-                self.drive_cmd_buffer = CommandDrive()
-                self.send_drive_buffer_velocity(self.drive_cmd_buffer)
-                self.time_last_cmd = now  # so this doesn't get called all the time
+            # # stop the motors if we haven't received a command in a while
+            # now = rospy.Time.now()
+            # if now - self.time_last_cmd > self.velocity_timeout:
+            #     # rather than a hard stop, send a ramped velocity command
+            #     self.drive_cmd_buffer = CommandDrive()
+            #     self.send_drive_buffer_velocity(self.drive_cmd_buffer)
+            #     self.time_last_cmd = now  # so this doesn't get called all the time
 
             self.status_pub.publish(status)
             counter += 1
@@ -122,20 +122,20 @@ class RoboclawWrapper(object):
             self.address[i] = int(address_list[i])
 
         # initialize connection status to successful
-        all_connected = True
-        for address in self.address:
-            rospy.logdebug("Attempting to talk to motor controller ''".format(address))
-            version_response = self.rc.ReadVersion(address)
-            connected = bool(version_response[0])
-            if not connected:
-                rospy.logerr("Unable to connect to roboclaw at '{}'".format(address))
-                all_connected = False
-            else:
-                rospy.logdebug("Roboclaw version for address '{}': '{}'".format(address, version_response[1]))
-        if all_connected:
-            rospy.loginfo("Sucessfully connected to RoboClaw motor controllers")
-        else:
-            raise Exception("Unable to establish connection to one or more of the Roboclaw motor controllers")
+        # all_connected = True
+        # for address in self.address:
+        #     rospy.logdebug("Attempting to talk to motor controller ''".format(address))
+        #     version_response = self.rc.ReadVersion(address)
+        #     connected = bool(version_response[0])
+        #     if not connected:
+        #         rospy.logerr("Unable to connect to roboclaw at '{}'".format(address))
+        #         all_connected = False
+        #     else:
+        #         rospy.logdebug("Roboclaw version for address '{}': '{}'".format(address, version_response[1]))
+        # if all_connected:
+        #     rospy.loginfo("Sucessfully connected to RoboClaw motor controllers")
+        # else:
+        #     raise Exception("Unable to establish connection to one or more of the Roboclaw motor controllers")
 
     def setup_encoders(self):
         """Set up the encoders"""
@@ -231,27 +231,32 @@ class RoboclawWrapper(object):
         """
         props = self.roboclaw_mapping["drive_left_front"]
         vel_cmd = self.velocity2qpps(cmd.left_front_vel, props["ticks_per_rev"], props["gear_ratio"])
+        
+        rospy.loginfo("self.send_velocity_cmd({}, {}, {})".format(props
+            ["address"],
+            props["channel"],
+            vel_cmd))
         self.send_velocity_cmd(props["address"], props["channel"], vel_cmd)
 
-        props = self.roboclaw_mapping["drive_left_middle"]
-        vel_cmd = self.velocity2qpps(cmd.left_middle_vel, props["ticks_per_rev"], props["gear_ratio"])
-        self.send_velocity_cmd(props["address"], props["channel"], vel_cmd)
+        # props = self.roboclaw_mapping["drive_left_middle"]
+        # vel_cmd = self.velocity2qpps(cmd.left_middle_vel, props["ticks_per_rev"], props["gear_ratio"])
+        # self.send_velocity_cmd(props["address"], props["channel"], vel_cmd)
 
-        props = self.roboclaw_mapping["drive_left_back"]
-        vel_cmd = self.velocity2qpps(cmd.left_back_vel, props["ticks_per_rev"], props["gear_ratio"])
-        self.send_velocity_cmd(props["address"], props["channel"], vel_cmd)
+        # props = self.roboclaw_mapping["drive_left_back"]
+        # vel_cmd = self.velocity2qpps(cmd.left_back_vel, props["ticks_per_rev"], props["gear_ratio"])
+        # self.send_velocity_cmd(props["address"], props["channel"], vel_cmd)
 
-        props = self.roboclaw_mapping["drive_right_back"]
-        vel_cmd = self.velocity2qpps(cmd.right_back_vel, props["ticks_per_rev"], props["gear_ratio"])
-        self.send_velocity_cmd(props["address"], props["channel"], vel_cmd)
+        # props = self.roboclaw_mapping["drive_right_back"]
+        # vel_cmd = self.velocity2qpps(cmd.right_back_vel, props["ticks_per_rev"], props["gear_ratio"])
+        # self.send_velocity_cmd(props["address"], props["channel"], vel_cmd)
 
-        props = self.roboclaw_mapping["drive_right_middle"]
-        vel_cmd = self.velocity2qpps(cmd.right_middle_vel, props["ticks_per_rev"], props["gear_ratio"])
-        self.send_velocity_cmd(props["address"], props["channel"], vel_cmd)
+        # props = self.roboclaw_mapping["drive_right_middle"]
+        # vel_cmd = self.velocity2qpps(cmd.right_middle_vel, props["ticks_per_rev"], props["gear_ratio"])
+        # self.send_velocity_cmd(props["address"], props["channel"], vel_cmd)
 
-        props = self.roboclaw_mapping["drive_right_front"]
-        vel_cmd = self.velocity2qpps(cmd.right_front_vel, props["ticks_per_rev"], props["gear_ratio"])
-        self.send_velocity_cmd(props["address"], props["channel"], vel_cmd)
+        # props = self.roboclaw_mapping["drive_right_front"]
+        # vel_cmd = self.velocity2qpps(cmd.right_front_vel, props["ticks_per_rev"], props["gear_ratio"])
+        # self.send_velocity_cmd(props["address"], props["channel"], vel_cmd)
 
     def send_position_cmd(self, address, channel, target_tick):
         """
@@ -307,6 +312,8 @@ class RoboclawWrapper(object):
         """
         # clip values
         target_qpps = max(-self.roboclaw_overflow, min(self.roboclaw_overflow, target_qpps))
+        rospy.loginfo("self.rc.SpeedAccelM1({}, {}, {})".format(address,
+            self.drive_accel, target_qpps))
         if channel == "M1":
             return self.rc.SpeedAccelM1(address, self.drive_accel, target_qpps)
         elif channel == "M2":
